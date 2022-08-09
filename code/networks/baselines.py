@@ -288,5 +288,14 @@ def _vgg(cfg, batch_norm):
     model = VGG(make_layers(cfgs[cfg], batch_norm=batch_norm))
     return model
 
+def vgg11_bn():
+    return _vgg('A', True)
+
+def vgg13_bn():
+    return _vgg('B', True)
+
+def vgg16_bn():
+    return _vgg('D', True)
+
 def vgg19_bn():
     return _vgg('E', True)
