@@ -16,7 +16,7 @@ class GazeData(Dataset):
         with h5py.File(data_path, 'r') as h5f:
             if dataset_name == 'utmv':
                 self.subject_ids = ['s%02d' % id for id in subject_ids]
-            else:   # mpiifacegaze
+            else:   # mpiigaze
                 self.subject_ids = ['p%02d' % id for id in subject_ids]
             
             self.index_to_query = sum([
