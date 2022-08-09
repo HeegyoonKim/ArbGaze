@@ -120,7 +120,7 @@ def train_and_test_split(dataset_name, fold):
         else:   # fold == 3
             TRAIN_SUBJECT_IDS = subject_group_1 + subject_group_2
             TEST_SUBJECT_IDS = subject_group_3
-    else: # mpiifacegaze
+    else: # mpiigaze
         all_subjects = [s for s in range(15)]
         all_subjects.remove(fold)
         TRAIN_SUBJECT_IDS = all_subjects
