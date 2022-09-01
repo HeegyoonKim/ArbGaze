@@ -1,5 +1,4 @@
 '''
-The code below was written with reference to:
 https://github.com/hysts/pytorch_mpiigaze/blob/master/tools/preprocess_mpiigaze.py
 https://github.com/swook/faze_preprocess/blob/5c33caaa1bc271a8d6aad21837e334108f293683/create_hdf_files_for_faze.py
 '''
