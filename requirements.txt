@@ -1,0 +1,4 @@
+# python requirements
+h5py
+opencv-python
+numpy
