@@ -2,7 +2,9 @@ import torch
 import torch.nn as nn
 
 from .FA_module import SA_Adapt
-from .backbones import resnet10, resnet18, resnet34, vgg13_bn, vgg16_bn, vgg19_bn
+from .resnet import resnet10, resnet18, resnet34
+from .vggnet import vgg13_bn, vgg16_bn, vgg19_bn
+from .densenet import densenet121, densenet161, densenet201
 
 
 class ArbGaze(nn.Module):
@@ -27,17 +29,18 @@ class ArbGaze(nn.Module):
             backbone = vgg16_bn()
         elif self.backbone == 'vgg19_bn':
             backbone = vgg19_bn()
+        elif self.backbone == 'densenet121':
+            backbone = densenet121()
+        elif self.backbone == 'densenet161':
+            backbone = densenet161()
+        elif self.backbone == 'densenet201':
+            backbone = densenet201()
         else:
             raise Exception('Invalid backbone model')
         
-        # backbone model
+        # Make modules
         self.make_modules(backbone)
-        self.GAP = nn.AdaptiveAvgPool2d((1,1))
-        self.regressor = nn.Sequential(
-            nn.Linear(512, 128),
-            nn.ReLU(inplace=True),
-            nn.Linear(128, 3)
-        )
+
         if p_dropout > 0:
             self.dropout = nn.Dropout(p_dropout)
 
@@ -56,7 +59,13 @@ class ArbGaze(nn.Module):
         module_list = list(backbone.children())
         self.init_module = nn.Sequential()
         self.conv_modules = nn.ModuleList()
-
+        self.GAP = nn.AdaptiveAvgPool2d((1,1))
+        self.regressor = nn.Sequential(
+            nn.Linear(512, 128),
+            nn.ReLU(inplace=True),
+            nn.Linear(128, 3)
+        )
+                        
         if 'resnet' in self.backbone:
             self.init_module = nn.Sequential(*module_list[0:4])
             for m in range(4, 8):
@@ -65,7 +74,17 @@ class ArbGaze(nn.Module):
             self.init_module = nn.Sequential(*list(module_list[0][0]))
             for m in range(1, 5):
                 self.conv_modules.append(nn.Sequential(*list(module_list[0][m])))
-    
+        elif 'dense' in self.backbone:
+            FC_feature_in = {'densenet121': 1024, 'densenet161': 2208, 'densenet201': 1920}
+            self.init_module = nn.Sequential(*module_list[0][0:4])
+            for m in range(4, 12, 2):
+                self.conv_modules.append(nn.Sequential(*module_list[0][m:m+2]))
+            self.regressor = nn.Sequential(
+                nn.Linear(FC_feature_in[self.backbone], 128),
+                nn.ReLU(inplace=True),
+                nn.Linear(128, 3)
+            )
+            
     def load_weights_from_teacher(self):
         pretrained = torch.load(self.pretrained_path).copy()
         self.load_state_dict(pretrained['state_dict'])
@@ -90,7 +109,10 @@ class ArbGaze(nn.Module):
         return x, intermediate_feats
 
 if __name__ == '__main__':
-    net = ArbGaze('vgg19_bn', False, 4, None, 0.0)
+    net = ArbGaze('densenet201', False, 4, None, 0.0)
     input = torch.randn(7, 1, 36, 60)
     scale = torch.tensor([3.0]).view(1,1).float()
     output, feats = net(input, scale)
+    print(output.size())
+    for i in range(len(feats)):
+        print(feats[i].size())
